@@ -56,16 +56,23 @@ getClusterFrequencyMap xs = ClusterFrequencyMap
 
 -- | Filter gaps out of the map. If no gaps are wanted, remove the entire
 -- position
-removeGaps :: Bool -> BlockMap -> BlockMap
-removeGaps gapFlag = BlockMap
-                   . AAMap
-                   . removeAll gapFlag
+removeGaps :: Bool -> AAMap -> AAMap
+removeGaps gapFlag = AAMap
+                   . filterGapKey
                    . Map.map filterGapKey
+                   . removeAll gapFlag
                    . unAAMap
-                   . unBlockMap
   where
-    removeAll False = id
-    removeAll True  = filterGapKey
+    removeAll False x = x
+    removeAll True x  =
+        if or
+         . map
+           ( \gap -> Map.member gap x
+                  || (or . Map.elems . Map.map (Map.member gap) $ x)
+           )
+         $ gaps
+            then Map.empty
+            else x
     filterGapKey    = Map.filterWithKey (\k _ -> notElem k gaps)
     gaps            = map AA "-."
 
@@ -88,14 +95,14 @@ toAAMap x = AAMap
 
 -- | Get the frequency matrix from a list of frequency maps from clusters.
 -- We no longer care about positions after this.
-getBlockMap :: [ClusterFrequencyMap] -> BlockMap
-getBlockMap = BlockMap
-            . mconcat
-            . Map.elems
-            . Map.map toAAMap
-            . Map.unionsWith (Seq.><)
-            . map (Map.map Seq.singleton) -- To separate different clusters
-            . map unClusterFrequencyMap
+getBlockMap :: Bool -> [ClusterFrequencyMap] -> BlockMap
+getBlockMap gapFlag = BlockMap
+                    . mconcat
+                    . Map.elems
+                    . Map.map (removeGaps gapFlag . toAAMap)
+                    . Map.unionsWith (Seq.><)
+                    . map (Map.map Seq.singleton) -- To separate different clusters
+                    . map unClusterFrequencyMap
 
 -- | Join together all frequency maps into a single frequency map.
 joinBlockMaps :: [BlockMap] -> FrequencyMap

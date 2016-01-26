@@ -83,8 +83,7 @@ blossum opts = do
         clusterMaps   = Map.elems
                       . Map.map getClusterFrequencyMap
                       . unClusterMap
-        blockMaps     = map (removeGaps (gapFlag opts))
-                      . fmap getBlockMap
+        blockMaps     = fmap (getBlockMap (gapFlag opts))
                       . fmap clusterMaps
                       . fmap clusters
                       . fmap Seq.fromList
