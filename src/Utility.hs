@@ -49,7 +49,7 @@ groupBlocks Nothing      = (:[])
 
 -- | Get a field from a fasta header
 getField :: Field -> FastaSequence -> T.Text
-getField (Field x) = (!! x) . T.splitOn "|" . fastaHeader
+getField (Field x) = (!! (x - 1)) . T.splitOn "|" . fastaHeader
 
 -- | Cut off the ends of a sequence
 cutEnds :: Seq.Seq a -> Seq.Seq a
