@@ -16,11 +16,16 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Types
+                     , Utility
                      , Cluster
+                     , Matrix
+                     , Print
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , text
+                     , text-show
                      , fasta
+                     , lens
   default-language:    Haskell2010
 
 executable blossum
@@ -31,6 +36,7 @@ executable blossum
                      , blossum
                      , containers
                      , fasta
+                     , text
                      , pipes
                      , pipes-text
                      , optparse-applicative

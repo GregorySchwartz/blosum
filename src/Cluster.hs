@@ -9,12 +9,12 @@ distance identity
 {-# LANGUAGE ViewPatterns #-}
 
 module Cluster
-    ( clusterIdentity
+    ( getClusterIdentity
     , groupBy'
     ) where
 
 -- Standard
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
 
@@ -31,12 +31,13 @@ negHamming x = sum . map (\(x, y) -> if x == y then 1 else 0) . T.zip x
 
 -- | Takes in an identity and fasta sequences and returns the sequences
 -- grouped together by hamming distance identity
-clusterIdentity :: Identity
+getClusterIdentity :: Identity
                 -> Seq.Seq FastaSequence
-                -> Map.Map Int (Seq.Seq FastaSequence)
-clusterIdentity identity = Map.fromList
-                         . zip [1..]
-                         . clusterIdentityGo identity
+                -> ClusterMap
+getClusterIdentity identity = ClusterMap
+                            . Map.fromList
+                            . zip [1..]
+                            . clusterIdentityGo identity
 
 -- | Keep comparing clusters until no more fusions (no change in size) make
 -- sense
