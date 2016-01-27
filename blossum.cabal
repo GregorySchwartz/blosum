@@ -37,6 +37,7 @@ executable blossum
                      , containers
                      , fasta
                      , text
+                     , split
                      , pipes
                      , pipes-text
                      , optparse-applicative

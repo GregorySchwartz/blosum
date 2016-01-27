@@ -6,6 +6,7 @@ by Gregory Schwartz
 -}
 
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Matrix
     ( removeGaps
@@ -17,6 +18,7 @@ module Matrix
 
 -- Standard
 import Data.Maybe
+import Data.Tuple
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 import qualified Data.Foldable as F
@@ -76,22 +78,34 @@ removeGaps gapFlag = AAMap
     filterGapKey    = Map.filterWithKey (\k _ -> notElem k gaps)
     gaps            = map AA "-."
 
--- | Count all pairs of tuples
-collectPairs :: (Ord a) => Seq.Seq a -> Seq.Seq a -> Seq.Seq (a, a)
-collectPairs = liftA2 (,)
+-- -- | Count all pairs of tuples, ignoring duplicate comparisons
+-- collectPairs' :: (Ord a) => (Int, Seq.Seq a)
+--                         -> (Int, Seq.Seq a)
+--                         -> Seq.Seq (a, a)
+-- collectPairs' (!x, !xs) (!y, !ys)
+--     | x == y    = Seq.empty
+--     | otherwise = liftA2 (,) xs ys
+
+collectPairs :: (Ord a) => Seq.Seq (Seq.Seq a)
+                        -> Seq.Seq (a, a)
+                        -> Seq.Seq (a, a)
+collectPairs (Seq.null -> True) !ys         = ys
+collectPairs (Seq.viewl -> x Seq.:< xs) !ys =
+    collectPairs xs $ comparisons Seq.>< flippedComparisons Seq.>< ys
+  where
+    flippedComparisons = Seq.filter (uncurry (/=)) . fmap swap $ comparisons
+    comparisons        = F.asum . fmap (pairs x) $ xs
+    pairs as bs        = (,) <$> as <*> bs
 
 -- Convert a sequence of clusters of sequences of AAs into an amino acid
 -- map. We do such a convoluted method in order to make sure we aren't
 -- comparing within a cluster, only between clusters.
 toAAMap :: Seq.Seq (Seq.Seq AA) -> AAMap
-toAAMap x = AAMap
-          . Map.fromListWith (Map.unionWith (+))
-          . F.toList
-          . fmap (over _2 (flip Map.singleton (Frequency 1)))
-          . F.asum
-          . cutEnds
-          . liftA2 collectPairs x
-          $ x
+toAAMap = AAMap
+        . Map.fromListWith (Map.unionWith (+))
+        . F.toList
+        . fmap (over _2 (flip Map.singleton (Frequency 1)))
+        . flip collectPairs Seq.empty
 
 -- | Get the frequency matrix from a list of frequency maps from clusters.
 -- We no longer care about positions after this.
@@ -119,8 +133,16 @@ getBlossum (FrequencyMap (AAMap frequencyMap)) =
     e x y       = if x == y then p x * p y else 2 * p x * p y
     p x         = q x x
                 + (sum (map (q x) . filter (/= x) . Map.keys $ frequencyMap) / 2)
-    q x y       = (\(Frequency x) -> x)
+    q x y       = (\(Frequency a) -> a)
                 $ (lookZero y (lookMap x $ frequencyMap))
-                / (Map.foldl' (+) 0 $ lookMap x frequencyMap)
+                / qDenom x y
     lookZero k = fromMaybe 0 . Map.lookup k
     lookMap k  = fromMaybe Map.empty . Map.lookup k
+    qDenom x y
+        | x == y    = sumMap . lookMap x $ frequencyMap
+        | otherwise = (sumMap . lookMap x $ frequencyMap)
+                    + ( sumMap
+                      . Map.filterWithKey (\k _ -> k /= x)
+                      . lookMap y
+                      $ frequencyMap
+                      )

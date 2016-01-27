@@ -10,6 +10,8 @@ import Data.Maybe
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 import qualified System.IO as IO
+import qualified Data.List.Split as Split
+import Debug.Trace
 
 -- Cabal
 import qualified Data.Text as T
@@ -42,7 +44,9 @@ options = Options
           ( long "input"
          <> short 'i'
          <> metavar "FILE"
-         <> help "The input fasta file with blocks labeled in a field"
+         <> help "The input fasta file with blocks labeled in a field.\
+                 \ If empty, then assumed to use stdin to send the many, many\
+                 \ filenames, where each file is a block."
           )
         )
       <*> option auto
@@ -72,11 +76,10 @@ options = Options
           )
         )
 
-blossum :: Options -> IO ()
-blossum opts = do
-    h <- case input opts of
-            Nothing  -> return IO.stdin
-            (Just x) -> IO.openFile x IO.ReadMode
+-- | Get a frequency map from a single file
+getFrequencyMapSingleFile :: Options -> FilePath -> IO FrequencyMap
+getFrequencyMapSingleFile opts file = do
+    h         <- IO.openFile file IO.ReadMode
     fastaList <- runEffect $ P.toListM $ pipesFasta . PT.fromHandle $ h
 
     let clusters      = getClusterIdentity (Identity $ identity opts)
@@ -90,7 +93,39 @@ blossum opts = do
                       . groupBlocks (fmap Field $ blockField opts)
                       $ fastaList
         frequencyMap  = joinBlockMaps blockMaps
-        blossumMatrix = getBlossum frequencyMap
+
+    return frequencyMap
+
+-- | Get a block from a filepath
+getBlock :: Options -> FilePath -> IO BlockMap
+getBlock opts file = do
+    h         <- IO.openFile file IO.ReadMode
+    fastaList <- runEffect $ P.toListM $ pipesFasta . PT.fromHandle $ h
+
+    let clusters   = getClusterIdentity (Identity $ identity opts)
+        clusterMap = Map.elems
+                   . Map.map getClusterFrequencyMap
+                   . unClusterMap
+        blockMap   = getBlockMap (gapFlag opts)
+                   . clusterMap
+                   . clusters
+                   . Seq.fromList
+                   $ fastaList
+
+    return blockMap
+
+blossum :: Options -> IO ()
+blossum opts = do
+
+    frequencyMap <-
+        case input opts of
+            Nothing  -> fmap FrequencyMap
+                      . P.fold (<>) (AAMap Map.empty) id
+                      $ P.stdinLn
+                    >-> P.mapM (fmap unBlockMap . getBlock opts)
+            (Just x) -> getFrequencyMapSingleFile opts x
+
+    let blossumMatrix = getBlossum frequencyMap
 
     -- Save results
     case output opts of

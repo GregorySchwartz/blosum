@@ -13,11 +13,13 @@ module Utility
     , nub'
     , groupBlocks
     , cutEnds
+    , sumMap
     ) where
 
 -- Standard
 import Data.List
 import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 
 -- Cabal
@@ -54,3 +56,7 @@ getField (Field x) = (!! (x - 1)) . T.splitOn "|" . fastaHeader
 -- | Cut off the ends of a sequence
 cutEnds :: Seq.Seq a -> Seq.Seq a
 cutEnds = Seq.reverse . Seq.drop 1 . Seq.reverse . Seq.drop 1
+
+-- | Sum up a map
+sumMap :: (Ord a, Num b) => Map.Map a b -> b
+sumMap = Map.foldl' (+) 0
