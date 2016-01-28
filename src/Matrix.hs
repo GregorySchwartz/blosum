@@ -134,14 +134,13 @@ getBlossum (FrequencyMap (AAMap frequencyMap)) =
                 + (sum (map (q x) . filter (/= x) . Map.keys $ frequencyMap) / 2)
     q x y       = (\(Frequency a) -> a)
                 $ (lookZero y (lookMap x $ frequencyMap))
-                / qDenom x y
+                / qDenom
+    qDenom = (/ 2)
+           $ (sumMap . Map.map sumMap $ frequencyMap)
+           + ( sumMap
+             . Map.mapWithKey
+               (\k1 -> sumMap . Map.filterWithKey (\k2 _ -> k1 == k2))
+             $ frequencyMap
+             )
     lookZero k = fromMaybe 0 . Map.lookup k
     lookMap k  = fromMaybe Map.empty . Map.lookup k
-    qDenom x y
-        | x == y    = sumMap . lookMap x $ frequencyMap
-        | otherwise = (sumMap . lookMap x $ frequencyMap)
-                    + ( sumMap
-                      . Map.filterWithKey (\k _ -> k /= x)
-                      . lookMap y
-                      $ frequencyMap
-                      )
