@@ -30,7 +30,7 @@ newtype ClusterMap          =
     deriving (Eq, Ord, Show)
 newtype ClusterFrequencyMap =
     ClusterFrequencyMap
-    { unClusterFrequencyMap :: (Map.Map Position (Seq.Seq AA))
+    { unClusterFrequencyMap :: (Map.Map Position (Seq.Seq (AA, Frequency)))
     }
     deriving (Eq, Ord, Show)
 newtype AAMap               = AAMap

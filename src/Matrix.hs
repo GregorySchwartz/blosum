@@ -44,13 +44,14 @@ zipPosition = zip [1..]
 -- | Get the frequencies of amino acid pairs for each position in a cluster
 getClusterFrequencyMap :: Seq.Seq FastaSequence -> ClusterFrequencyMap
 getClusterFrequencyMap xs = ClusterFrequencyMap
-                          . Map.map (Seq.fromList . nub' . F.toList)
+                          . Map.map summarize
                           . Map.fromListWith (Seq.><)
                           . concat
                           . F.toList
                           . fmap positionFrequencies
                           $ xs
   where
+    summarize           = Seq.fromList . zipSize clusterSize . F.toList
     positionFrequencies = zipPosition
                         . map Seq.singleton
                         . getSeq
@@ -78,33 +79,31 @@ removeGaps gapFlag = AAMap
     filterGapKey    = Map.filterWithKey (\k _ -> notElem k gaps)
     gaps            = map AA "-."
 
--- -- | Count all pairs of tuples, ignoring duplicate comparisons
--- collectPairs' :: (Ord a) => (Int, Seq.Seq a)
---                         -> (Int, Seq.Seq a)
---                         -> Seq.Seq (a, a)
--- collectPairs' (!x, !xs) (!y, !ys)
---     | x == y    = Seq.empty
---     | otherwise = liftA2 (,) xs ys
-
-collectPairs :: (Ord a) => Seq.Seq (Seq.Seq a)
-                        -> Seq.Seq (a, a)
-                        -> Seq.Seq (a, a)
+collectPairs :: (Ord a, Num b, Fractional b) => Seq.Seq (Seq.Seq (a, b))
+                                             -> Seq.Seq (a, (a, b))
+                                             -> Seq.Seq (a, (a, b))
 collectPairs (Seq.null -> True) !ys         = ys
 collectPairs (Seq.viewl -> x Seq.:< xs) !ys =
     collectPairs xs $ comparisons Seq.>< flippedComparisons Seq.>< ys
   where
-    flippedComparisons = Seq.filter (uncurry (/=)) . fmap swap $ comparisons
+    flippedComparisons = Seq.filter (\a -> fst a /= (fst . snd $ a))
+                       . fmap (\ (!a, (!b, !c)) -> (b, (a, c)))
+                       $ comparisons
     comparisons        = F.asum . fmap (pairs x) $ xs
-    pairs as bs        = (,) <$> as <*> bs
+    pairs as bs        = (\ (!a, !b) (!c, !d)
+                         -> (a, (c, (1 / (b * d))))
+                         )
+                     <$> as
+                     <*> bs
 
 -- Convert a sequence of clusters of sequences of AAs into an amino acid
 -- map. We do such a convoluted method in order to make sure we aren't
 -- comparing within a cluster, only between clusters.
-toAAMap :: Seq.Seq (Seq.Seq AA) -> AAMap
+toAAMap :: Seq.Seq (Seq.Seq (AA, Frequency)) -> AAMap
 toAAMap = AAMap
         . Map.fromListWith (Map.unionWith (+))
         . F.toList
-        . fmap (over _2 (flip Map.singleton (Frequency 1)))
+        . fmap (over _2 (uncurry Map.singleton))
         . flip collectPairs Seq.empty
 
 -- | Get the frequency matrix from a list of frequency maps from clusters.
