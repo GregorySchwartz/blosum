@@ -15,14 +15,14 @@ import qualified Data.Sequence as Seq
 -- Cabal
 import Data.Fasta.Text
 
-newtype AA        = AA Char deriving (Eq, Ord, Show, Read)
+newtype AA        = AA { unAA :: Char } deriving (Eq, Ord, Show, Read)
 newtype Nuc       = Nuc Char deriving (Eq, Ord, Show, Read)
 newtype Field     = Field Int deriving (Eq)
 newtype Frequency = Frequency Double
                     deriving (Eq, Ord, Num, Enum, Show, Read, Fractional)
 newtype Position  = Position Int deriving (Eq, Ord, Num, Enum, Show, Read)
 newtype Identity  = Identity Double deriving (Eq, Ord, Num, Show, Read)
-newtype BlossumVal = BlossumVal Int
+newtype BlossumVal = BlossumVal { unBlossumVal :: Int }
                      deriving (Eq, Ord, Num, Enum, Show, Read)
 
 newtype ClusterMap          =

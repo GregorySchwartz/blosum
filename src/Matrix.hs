@@ -9,7 +9,7 @@ by Gregory Schwartz
 {-# LANGUAGE ViewPatterns #-}
 
 module Matrix
-    ( removeGaps
+    ( removeChar
     , getClusterFrequencyMap
     , getBlockMap
     , joinBlockMaps
@@ -59,25 +59,25 @@ getClusterFrequencyMap xs = ClusterFrequencyMap
 
 -- | Filter gaps out of the map. If no gaps are wanted, remove the entire
 -- position
-removeGaps :: Bool -> AAMap -> AAMap
-removeGaps gapFlag = AAMap
-                   . filterGapKey
-                   . Map.map filterGapKey
-                   . removeAll gapFlag
-                   . unAAMap
+removeChar :: Bool -> Maybe [AA] -> AAMap -> AAMap
+removeChar _ Nothing = id
+removeChar allFlag (Just badChars) = AAMap
+                                   . filterBadKey
+                                   . Map.map filterBadKey
+                                   . removeAll allFlag
+                                   . unAAMap
   where
     removeAll False x = x
     removeAll True x  =
         if or
          . map
-           ( \gap -> Map.member gap x
-                  || (or . Map.elems . Map.map (Map.member gap) $ x)
+           ( \bad -> Map.member bad x
+                  || (or . Map.elems . Map.map (Map.member bad) $ x)
            )
-         $ gaps
+         $ badChars
             then Map.empty
             else x
-    filterGapKey    = Map.filterWithKey (\k _ -> notElem k gaps)
-    gaps            = map AA "-."
+    filterBadKey    = Map.filterWithKey (\k _ -> notElem k badChars)
 
 collectPairs :: (Ord a, Num b, Fractional b) => Seq.Seq (Seq.Seq (a, b))
                                              -> Seq.Seq (a, (a, b))
@@ -108,14 +108,14 @@ toAAMap = AAMap
 
 -- | Get the frequency matrix from a list of frequency maps from clusters.
 -- We no longer care about positions after this.
-getBlockMap :: Bool -> [ClusterFrequencyMap] -> BlockMap
-getBlockMap gapFlag = BlockMap
-                    . mconcat
-                    . Map.elems
-                    . Map.map (removeGaps gapFlag . toAAMap)
-                    . Map.unionsWith (Seq.><)
-                    . map (Map.map Seq.singleton) -- To separate different clusters
-                    . map unClusterFrequencyMap
+getBlockMap :: Bool -> Maybe [AA] -> [ClusterFrequencyMap] -> BlockMap
+getBlockMap allFlag badChars = BlockMap
+                             . mconcat
+                             . Map.elems
+                             . Map.map (removeChar allFlag badChars . toAAMap)
+                             . Map.unionsWith (Seq.><)
+                             . map (Map.map Seq.singleton) -- To separate different clusters
+                             . map unClusterFrequencyMap
 
 -- | Join together all frequency maps into a single frequency map.
 joinBlockMaps :: [BlockMap] -> FrequencyMap

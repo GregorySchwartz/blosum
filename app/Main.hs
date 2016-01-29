@@ -33,7 +33,9 @@ import Print
 data Options = Options { input      :: Maybe String
                        , identity   :: Double
                        , blockField :: Maybe Int
-                       , gapFlag    :: Bool
+                       , csv        :: Maybe String
+                       , badChars   :: Maybe String
+                       , allFlag    :: Bool
                        , output     :: Maybe String
                        }
 
@@ -62,12 +64,29 @@ options = Options
          <> metavar "FIELD"
          <> help "The field in the fasta headers (1 indexed) which says\
                  \ the block it belongs to. Assumed to already be next to\
-                 \ each other, so the block members should not be scattered" )
+                 \ each other, so the block members should not be scattered"
+          )
+        )
+      <*> optional ( strOption
+          ( long "csv"
+         <> short 'c'
+         <> metavar "STRING"
+         <> help "Print the output as a 2D csv using this ordering" )
+          )
+      <*> optional ( strOption
+          ( long "remove-characters"
+         <> short 'b'
+         <> metavar "STRING"
+         <> help "Whether to remove this character from individual sequences\
+                 \ that have at least one of these characters"
+          )
         )
       <*> switch
-          ( long "remove-gaps"
-         <> short 'g'
-         <> help "Whether to remove positions that have a gap" )
+          ( long "all-remove-characters"
+         <> short 'B'
+         <> help "Whether to remove all positions that have at least one of the\
+                 \ characters from remove-character"
+          )
       <*> optional ( strOption
           ( long "output"
          <> short 'o'
@@ -86,7 +105,10 @@ getFrequencyMapSingleFile opts file = do
         clusterMaps   = Map.elems
                       . Map.map getClusterFrequencyMap
                       . unClusterMap
-        blockMaps     = fmap (getBlockMap (gapFlag opts))
+        blockMaps     = fmap ( getBlockMap
+                               (allFlag opts)
+                               ((fmap . fmap) AA $ badChars opts)
+                             )
                       . fmap clusterMaps
                       . fmap clusters
                       . fmap Seq.fromList
@@ -106,7 +128,9 @@ getBlock opts file = do
         clusterMap = Map.elems
                    . Map.map getClusterFrequencyMap
                    . unClusterMap
-        blockMap   = getBlockMap (gapFlag opts)
+        blockMap   = getBlockMap
+                     (allFlag opts)
+                     ((fmap . fmap) AA $ badChars opts)
                    . clusterMap
                    . clusters
                    . Seq.fromList
@@ -126,11 +150,18 @@ blossum opts = do
             (Just x) -> getFrequencyMapSingleFile opts x
 
     let blossumMatrix = getBlossum frequencyMap
+        result        = case csv opts of
+                            (Just x) -> printBlossumCSV
+                                        (map AA x)
+                                        blossumMatrix
+                            Nothing  -> printBlossum blossumMatrix
+
+
 
     -- Save results
     case output opts of
-        Nothing  -> T.putStrLn . printBlossum $ blossumMatrix
-        (Just x) -> T.writeFile x . printBlossum $ blossumMatrix
+        Nothing  -> T.putStrLn result
+        (Just x) -> T.writeFile x result
 
 main :: IO ()
 main = execParser opts >>= blossum

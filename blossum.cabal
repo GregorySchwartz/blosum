@@ -1,5 +1,5 @@
 name:                blossum
-version:             0.1.0.0
+version:             0.1.1.0
 synopsis:            BLOSUM matrix generator with the addition of special serine
 description:         Please see README.md
 homepage:            http://github.com/GregorySchwartz/blossum#readme
