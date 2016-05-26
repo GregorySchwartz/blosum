@@ -138,8 +138,8 @@ getBlock opts file = do
 
     return blockMap
 
-blossum :: Options -> IO ()
-blossum opts = do
+blosum :: Options -> IO ()
+blosum opts = do
 
     frequencyMap <-
         case input opts of
@@ -149,12 +149,12 @@ blossum opts = do
                     >-> P.mapM (fmap unBlockMap . getBlock opts)
             (Just x) -> getFrequencyMapSingleFile opts x
 
-    let blossumMatrix = getBlossum frequencyMap
+    let blosumMatrix = getBlosum frequencyMap
         result        = case csv opts of
-                            (Just x) -> printBlossumCSV
+                            (Just x) -> printBlosumCSV
                                         (map AA x)
-                                        blossumMatrix
-                            Nothing  -> printBlossum blossumMatrix
+                                        blosumMatrix
+                            Nothing  -> printBlosum blosumMatrix
 
 
 
@@ -164,7 +164,7 @@ blossum opts = do
         (Just x) -> T.writeFile x result
 
 main :: IO ()
-main = execParser opts >>= blossum
+main = execParser opts >>= blosum
   where
     opts = info (helper <*> options)
       ( fullDesc

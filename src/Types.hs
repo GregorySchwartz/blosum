@@ -22,8 +22,8 @@ newtype Frequency = Frequency Double
                     deriving (Eq, Ord, Num, Enum, Show, Read, Fractional)
 newtype Position  = Position Int deriving (Eq, Ord, Num, Enum, Show, Read)
 newtype Identity  = Identity Double deriving (Eq, Ord, Num, Show, Read)
-newtype BlossumVal = BlossumVal { unBlossumVal :: Int }
-                     deriving (Eq, Ord, Num, Enum, Show, Read)
+newtype BlosumVal = BlosumVal { unBlosumVal :: Int }
+                    deriving (Eq, Ord, Num, Enum, Show, Read)
 
 newtype ClusterMap          =
     ClusterMap { unClusterMap :: Map.Map Int (Seq.Seq FastaSequence) }
@@ -40,8 +40,8 @@ newtype BlockMap            = BlockMap { unBlockMap :: AAMap }
                               deriving (Eq, Ord, Show)
 newtype FrequencyMap        = FrequencyMap { unFrequencyMap :: AAMap }
                               deriving (Eq, Ord, Show)
-newtype Blossum             =
-    Blossum { unBlossum :: (Map.Map AA (Map.Map AA BlossumVal)) }
+newtype Blosum              =
+    Blosum { unBlosum :: (Map.Map AA (Map.Map AA BlosumVal)) }
     deriving (Eq, Ord, Show)
 
 instance Monoid AAMap where

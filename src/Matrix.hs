@@ -1,7 +1,7 @@
 {- Matrix
 by Gregory Schwartz
 
--- | Collects the functions pertaining to the creation of the BLOSSUM
+-- | Collects the functions pertaining to the creation of the BLOSUM
 -- matrix
 -}
 
@@ -13,7 +13,7 @@ module Matrix
     , getClusterFrequencyMap
     , getBlockMap
     , joinBlockMaps
-    , getBlossum
+    , getBlosum
     ) where
 
 -- Standard
@@ -121,20 +121,20 @@ getBlockMap allFlag badChars = BlockMap
 joinBlockMaps :: [BlockMap] -> FrequencyMap
 joinBlockMaps = FrequencyMap . mconcat . map unBlockMap
 
--- | Get the blossum matrix of each AA entry
-getBlossum :: FrequencyMap -> Blossum
-getBlossum (FrequencyMap (AAMap frequencyMap)) =
-    Blossum
-        . Map.mapWithKey (\k -> Map.mapWithKey (\l _ -> blossum k l))
+-- | Get the blosum matrix of each AA entry
+getBlosum :: FrequencyMap -> Blosum
+getBlosum (FrequencyMap (AAMap frequencyMap)) =
+    Blosum
+        . Map.mapWithKey (\k -> Map.mapWithKey (\l _ -> blosum k l))
         $ frequencyMap
   where
-    blossum x y = BlossumVal . round $ 2 * logBase 2 (q x y / e x y)
-    e x y       = if x == y then p x * p y else 2 * p x * p y
-    p x         = q x x
-                + (sum (map (q x) . filter (/= x) . Map.keys $ frequencyMap) / 2)
-    q x y       = (\(Frequency a) -> a)
-                $ (lookZero y (lookMap x $ frequencyMap))
-                / qDenom
+    blosum x y = BlosumVal . round $ 2 * logBase 2 (q x y / e x y)
+    e x y      = if x == y then p x * p y else 2 * p x * p y
+    p x        = q x x
+               + (sum (map (q x) . filter (/= x) . Map.keys $ frequencyMap) / 2)
+    q x y      = (\(Frequency a) -> a)
+               $ (lookZero y (lookMap x $ frequencyMap))
+               / qDenom
     qDenom = (/ 2)
            $ (sumMap . Map.map sumMap $ frequencyMap)
            + ( sumMap
