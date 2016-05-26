@@ -1,7 +1,6 @@
 name:                blosum
 version:             0.1.1.1
-synopsis:            BLOSUM generator with the addition of any generic
-                     characters for special amino acids
+synopsis:            BLOSUM generator
 description:         Please see README.md
 homepage:            http://github.com/GregorySchwartz/blosum#readme
 license:             GPL-2
