@@ -1,7 +1,7 @@
 {- Main
 by Gregory Schwartz
 
--- | Computes a BLOSUM matrix, but takes into account alternate amino acids
+-- | Computes a BLOSUM, but takes into account alternate amino acids
 -}
 module Main where
 
@@ -168,6 +168,6 @@ main = execParser opts >>= blosum
   where
     opts = info (helper <*> options)
       ( fullDesc
-     <> progDesc "Computes a BLOSUM matrix, but takes into account\
+     <> progDesc "Computes a BLOSUM, but takes into account\
                  \ alternate amino acids"
       )
