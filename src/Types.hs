@@ -13,7 +13,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 
 -- Cabal
-import Data.Fasta.Text
+import Data.Fasta.Text (FastaSequence)
 
 newtype AA        = AA { unAA :: Char } deriving (Eq, Ord, Show, Read)
 newtype Nuc       = Nuc Char deriving (Eq, Ord, Show, Read)

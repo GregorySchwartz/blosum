@@ -24,7 +24,7 @@ import qualified Data.Sequence as Seq
 
 -- Cabal
 import qualified Data.Text as T
-import Data.Fasta.Text
+import Data.Fasta.Text ( FastaSequence, fastaSeq, fastaHeader )
 
 -- Local
 import Types

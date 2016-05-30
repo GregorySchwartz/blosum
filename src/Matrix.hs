@@ -26,7 +26,7 @@ import Control.Applicative
 import Control.Lens
 
 -- Cabal
-import Data.Fasta.Text
+import Data.Fasta.Text (FastaSequence)
 
 -- Local
 import Types
