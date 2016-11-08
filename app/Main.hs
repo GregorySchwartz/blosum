@@ -9,9 +9,10 @@ module Main where
 import Data.Maybe
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
-import qualified System.IO as IO
 import qualified Data.List.Split as Split
-import Debug.Trace
+import qualified Data.Monoid as Mon
+import Data.Semigroup ((<>))
+import qualified System.IO as IO
 
 -- Cabal
 import qualified Data.Text as T
@@ -144,7 +145,7 @@ blosum opts = do
     frequencyMap <-
         case input opts of
             Nothing  -> fmap FrequencyMap
-                      . P.fold (<>) (AAMap Map.empty) id
+                      . P.fold (Mon.<>) (AAMap Map.empty) id
                       $ P.stdinLn
                     >-> P.mapM (fmap unBlockMap . getBlock opts)
             (Just x) -> getFrequencyMapSingleFile opts x
