@@ -3,11 +3,11 @@ version:             0.1.1.4
 synopsis:            BLOSUM generator
 description:         Generates BLOSUMs for use with finding the degree of amino acid conservation.
 homepage:            http://github.com/GregorySchwartz/blosum#readme
-license:             GPL-2
+license:             GPL-3
 license-file:        LICENSE
 author:              Gregory W. Schwartz
-maintainer:          gregory.schwartz@drexel.edu
-copyright:           Copyright 2016 Gregory W. Schwartz
+maintainer:          gsch@mail.med.upenn.edu
+copyright:           Copyright 2017 Gregory W. Schwartz
 category:            Bioinformatics
 build-type:          Simple
 -- extra-source-files:
